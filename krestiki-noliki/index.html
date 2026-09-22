@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Пиратские крестики-нолики для команды" />
+    <title>Крестики-нолики: пиратская версия</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <section class="game-card" aria-labelledby="game-title">
+        <div class="game-heading">
+            <p class="eyebrow">Бортовой журнал · рейс № 03</p>
+            <h1 id="game-title">Крестики-нолики<br /><span>в пиратском море</span></h1>
+            <p class="subtitle">Капитан против штурмана. Кто первым захватит три клетки?</p>
+        </div>
+
+        <div class="controls" aria-label="Настройки партии">
+          <label>Режим
+            <select id="mode">
+              <option value="bot">Против компьютера</option>
+              <option value="duel">Дуэль вдвоем</option>
+            </select>
+          </label>
+          <label id="difficulty-wrap">Уровень
+            <select id="difficulty">
+              <option value="deckhand">Юнга</option>
+              <option value="captain">Морской волк</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="scoreboard" aria-label="Счет игры">
+          <div class="score score-x">
+            <span class="score-symbol">X</span>
+              <span class="score-label">Капитан</span>
+            <strong id="score-x">0</strong>
+          </div>
+          <div class="turn-indicator" id="turn-indicator" aria-live="polite">Ход X</div>
+          <div class="score score-o">
+            <span class="score-symbol">O</span>
+              <span class="score-label">Штурман</span>
+            <strong id="score-o">0</strong>
+          </div>
+        </div>
+
+        <div class="board" id="board" role="grid" aria-label="Игровое поле"></div>
+
+        <div class="game-footer">
+            <p class="status" id="status" aria-live="polite">Ваш ход, капитан</p>
+            <button class="new-game" id="new-game" type="button">Поднять якорь и начать</button>
+        </div>
+      </section>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>

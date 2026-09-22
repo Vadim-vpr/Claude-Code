@@ -1,111 +1,37 @@
 const board = document.querySelector('#board');
 const status = document.querySelector('#status');
 const turnIndicator = document.querySelector('#turn-indicator');
-const newGameButton = document.querySelector('#new-game');
-const modeSelect = document.querySelector('#mode');
-const difficultySelect = document.querySelector('#difficulty');
-const difficultyWrap = document.querySelector('#difficulty-wrap');
 const scoreX = document.querySelector('#score-x');
 const scoreO = document.querySelector('#score-o');
+const difficulty = document.querySelector('#difficulty');
+const botSettings = document.querySelector('#bot-settings');
+const onlinePanel = document.querySelector('#online-panel');
+const roomCode = document.querySelector('#room-code');
+const roomShare = document.querySelector('#room-share');
+const roomCodeDisplay = document.querySelector('#room-code-display');
+const connectionLabel = document.querySelector('#connection');
 const winningLines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-let cells = [], currentPlayer = 'X', gameActive = true, scores = { X: 0, O: 0 }, thinking = false;
+let cells = [], currentPlayer = 'X', mode = 'bot', gameActive = true, thinking = false, scores = { X: 0, O: 0 }, connection = null, onlineMark = null;
 function createBoard() { board.innerHTML = ''; cells = Array.from({ length: 9 }, (_, index) => { const cell = document.createElement('button'); cell.className = 'cell'; cell.type = 'button'; cell.setAttribute('role', 'gridcell'); cell.setAttribute('aria-label', `Клетка ${index + 1}`); cell.addEventListener('click', () => makeMove(index)); board.append(cell); return cell; }); }
-function makeMove(index) { if (!gameActive || thinking || cells[index].textContent) return; markCell(index, currentPlayer); const line = getWinningLine(); if (line) return finishGame(`${currentPlayer === 'X' ? 'Капитан' : 'Штурман'} победил!`, line); if (cells.every((cell) => cell.textContent)) return finishGame('Ничья! Карта сокровищ осталась общей.'); currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateTurn(); if (modeSelect.value === 'bot' && currentPlayer === 'O') botMove(); }
 function markCell(index, player) { cells[index].textContent = player; cells[index].classList.add(player.toLowerCase()); cells[index].disabled = true; cells[index].setAttribute('aria-label', `Клетка ${index + 1}: ${player}`); }
-function getWinningLine() { return winningLines.find(([a,b,c]) => cells[a].textContent && cells[a].textContent === cells[b].textContent && cells[a].textContent === cells[c].textContent); }
-function botMove() { thinking = true; status.textContent = 'Штурман сверяется с картой...'; window.setTimeout(() => { const move = difficultySelect.value === 'captain' ? bestMove() : casualMove(); markCell(move, 'O'); thinking = false; const line = getWinningLine(); if (line) return finishGame('Штурман захватил палубу!', line); if (cells.every((cell) => cell.textContent)) return finishGame('Ничья! Карта сокровищ осталась общей.'); currentPlayer = 'X'; updateTurn(); }, 450); }
-function casualMove() { const open = cells.map((cell, index) => cell.textContent ? null : index).filter((index) => index !== null); return open[Math.floor(Math.random() * open.length)]; }
-function bestMove() { const open = cells.map((cell, index) => cell.textContent ? null : index).filter((index) => index !== null); let move = open.find((index) => wouldWin(index, 'O')); if (move !== undefined) return move; move = open.find((index) => wouldWin(index, 'X')); if (move !== undefined) return move; if (!cells[4].textContent) return 4; return open[0]; }
-function wouldWin(index, player) { const values = cells.map((cell) => cell.textContent); values[index] = player; return winningLines.some(([a,b,c]) => values[a] === player && values[b] === player && values[c] === player); }
-function finishGame(message, line = []) { gameActive = false; status.textContent = message; turnIndicator.textContent = 'Партия завершена'; line.forEach((index) => cells[index].classList.add('winner')); if (line.length) { scores[currentPlayer] += 1; scoreX.textContent = scores.X; scoreO.textContent = scores.O; } }
-function updateTurn() { turnIndicator.textContent = `Ход ${currentPlayer}`; status.textContent = modeSelect.value === 'bot' ? (currentPlayer === 'X' ? 'Ваш ход, капитан' : 'Ход штурмана') : `Ходят ${currentPlayer === 'X' ? 'крестики' : 'нолики'}`; }
-function startNewGame() { currentPlayer = 'X'; gameActive = true; thinking = false; createBoard(); updateTurn(); }
-modeSelect.addEventListener('change', () => { difficultyWrap.hidden = modeSelect.value !== 'bot'; startNewGame(); }); difficultySelect.addEventListener('change', startNewGame); newGameButton.addEventListener('click', startNewGame); startNewGame();
-const board = document.querySelector('#board');
-const status = document.querySelector('#status');
-const turnIndicator = document.querySelector('#turn-indicator');
-const newGameButton = document.querySelector('#new-game');
-const scoreX = document.querySelector('#score-x');
-const scoreO = document.querySelector('#score-o');
-
-const winningLines = [
-  [0, 1, 2], [3, 4, 5], [6, 7, 8],
-  [0, 3, 6], [1, 4, 7], [2, 5, 8],
-  [0, 4, 8], [2, 4, 6],
-];
-
-let cells = [];
-let currentPlayer = 'X';
-let gameActive = true;
-let scores = { X: 0, O: 0 };
-
-function createBoard() {
-  board.innerHTML = '';
-  cells = Array.from({ length: 9 }, (_, index) => {
-    const cell = document.createElement('button');
-    cell.className = 'cell';
-    cell.type = 'button';
-    cell.setAttribute('role', 'gridcell');
-    cell.setAttribute('aria-label', `Клетка ${index + 1}`);
-    cell.addEventListener('click', () => makeMove(index));
-    board.append(cell);
-    return cell;
-  });
-}
-
-function makeMove(index) {
-  if (!gameActive || cells[index].textContent) return;
-
-  cells[index].textContent = currentPlayer;
-  cells[index].classList.add(currentPlayer.toLowerCase());
-  cells[index].setAttribute('aria-label', `Клетка ${index + 1}: ${currentPlayer}`);
-  cells[index].disabled = true;
-
-  const winningLine = getWinningLine();
-  if (winningLine) {
-    finishGame(`${currentPlayer} победил!`, winningLine);
-    return;
-  }
-
-  if (cells.every((cell) => cell.textContent)) {
-    finishGame('Ничья! Поле заполнено.');
-    return;
-  }
-
-  currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-  updateTurn();
-}
-
-function getWinningLine() {
-  return winningLines.find(([a, b, c]) => {
-    const value = cells[a].textContent;
-    return value && value === cells[b].textContent && value === cells[c].textContent;
-  });
-}
-
-function finishGame(message, winningLine = []) {
-  gameActive = false;
-  status.textContent = message;
-  turnIndicator.textContent = 'Партия завершена';
-  winningLine.forEach((index) => cells[index].classList.add('winner'));
-  if (winningLine.length) {
-    scores[currentPlayer] += 1;
-    scoreX.textContent = scores.X;
-    scoreO.textContent = scores.O;
-  }
-}
-
-function updateTurn() {
-  turnIndicator.textContent = `Ход ${currentPlayer}`;
-  status.textContent = `Сейчас ходят ${currentPlayer === 'X' ? 'крестики' : 'нолики'}`;
-}
-
-function startNewGame() {
-  currentPlayer = 'X';
-  gameActive = true;
-  createBoard();
-  updateTurn();
-}
-
-newGameButton.addEventListener('click', startNewGame);
-startNewGame();
+function getLine() { return winningLines.find(([a,b,c]) => cells[a].textContent && cells[a].textContent === cells[b].textContent && cells[a].textContent === cells[c].textContent); }
+function getState() { return cells.map((cell) => cell.textContent || ''); }
+function loadState(state, turn) { cells.forEach((cell, index) => { cell.textContent = state[index]; cell.className = `cell${state[index] ? ` ${state[index].toLowerCase()}` : ''}`; cell.disabled = Boolean(state[index]); }); currentPlayer = turn; updateTurn(); }
+function makeMove(index) { if (!gameActive || thinking || cells[index].textContent || (mode === 'bot' && currentPlayer === 'O') || (mode === 'online' && currentPlayer !== onlineMark)) return; markCell(index, currentPlayer); if (mode === 'online') sendState(); resolveTurn(); }
+function resolveTurn() { const line = getLine(); if (line) { finishGame(`${currentPlayer === 'X' ? 'Капитан' : 'Штурман'} захватил палубу!`, line); return; } if (cells.every((cell) => cell.textContent)) { finishGame('Ничья! Карта сокровищ осталась общей.'); return; } currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; updateTurn(); if (mode === 'bot' && currentPlayer === 'O') botMove(); }
+function finishGame(message, line = []) { gameActive = false; status.textContent = message; turnIndicator.textContent = 'Партия завершена'; line.forEach((index) => cells[index].classList.add('winner')); if (line.length) { scores[currentPlayer] += 1; scoreX.textContent = scores.X; scoreO.textContent = scores.O; } if (mode === 'online') sendState(true); }
+function updateTurn() { turnIndicator.textContent = `Ходит ${currentPlayer}`; if (mode === 'bot') status.textContent = currentPlayer === 'X' ? 'Ваш ход, капитан' : 'Штурман выбирает клетку...'; if (mode === 'duel') status.textContent = `Ход ${currentPlayer === 'X' ? 'капитана' : 'штурмана'}`; if (mode === 'online') status.textContent = currentPlayer === onlineMark ? 'Ваш ход' : 'Ход соперника...'; }
+function botMove() { thinking = true; window.setTimeout(() => { const index = difficulty.value === 'captain' ? bestMove() : casualMove(); markCell(index, 'O'); thinking = false; resolveTurn(); }, 460); }
+function openCells() { return cells.map((cell, index) => cell.textContent ? null : index).filter((index) => index !== null); }
+function casualMove() { const open = openCells(); return open[Math.floor(Math.random() * open.length)]; }
+function bestMove() { const open = openCells(); let move = open.find((index) => wouldWin(index, 'O')); if (move !== undefined) return move; move = open.find((index) => wouldWin(index, 'X')); if (move !== undefined) return move; if (!cells[4].textContent) return 4; return open[0]; }
+function wouldWin(index, player) { const values = getState(); values[index] = player; return winningLines.some(([a,b,c]) => values[a] === player && values[b] === player && values[c] === player); }
+function newGame() { gameActive = true; thinking = false; currentPlayer = 'X'; createBoard(); updateTurn(); if (mode === 'online' && connection) sendState(); }
+function setMode(nextMode) { mode = nextMode; botSettings.hidden = mode !== 'bot'; onlinePanel.hidden = mode !== 'online'; connectionLabel.textContent = mode === 'online' ? '● нет подключения' : '● локальная партия'; connectionLabel.classList.toggle('online', mode === 'online'); newGame(); }
+function sendState(gameOver = false) { if (connection?.open) connection.send({ state: getState(), turn: currentPlayer, gameOver }); }
+function connectPeer(peerConnection, mark) { connection = peerConnection; onlineMark = mark; connection.on('open', () => { connectionLabel.textContent = `● онлайн · вы ${mark}`; connectionLabel.classList.add('online'); roomShare.hidden = false; newGame(); }); connection.on('data', (data) => { loadState(data.state, data.turn); gameActive = !data.gameOver; }); connection.on('close', () => { connectionLabel.textContent = '● соперник отключился'; status.textContent = 'Связь с соперником прервана'; }); }
+function createRoom() { if (!window.Peer) { status.textContent = 'Онлайн-сервис временно недоступен'; return; } const peer = new Peer(); peer.on('open', (id) => { roomCodeDisplay.textContent = id; roomCode.value = id; roomShare.hidden = false; connectionLabel.textContent = '● ждем соперника'; const link = new URL(window.location.href); link.hash = `room=${id}`; roomShare.dataset.link = link.href; }); peer.on('connection', (incoming) => connectPeer(incoming, 'X')); peer.on('error', () => { status.textContent = 'Не удалось открыть стол, попробуйте еще раз'; }); onlineMark = 'X'; }
+function joinRoom() { const code = roomCode.value.trim(); const hashRoom = new URLSearchParams(window.location.hash.slice(1)).get('room'); const id = code || hashRoom; if (!id || !window.Peer) { status.textContent = 'Введите код стола или откройте ссылку друга'; return; } const peer = new Peer(); peer.on('open', () => connectPeer(peer.connect(id), 'O')); peer.on('error', () => { status.textContent = 'Стол не найден. Проверьте код'; }); }
+document.querySelectorAll('.mode-tab').forEach((tab) => tab.addEventListener('click', () => { document.querySelectorAll('.mode-tab').forEach((item) => item.classList.remove('active')); tab.classList.add('active'); setMode(tab.dataset.mode); }));
+document.querySelector('#new-game').addEventListener('click', newGame); document.querySelector('#create-room').addEventListener('click', createRoom); document.querySelector('#join-room').addEventListener('click', joinRoom); document.querySelector('#copy-link').addEventListener('click', async () => { await navigator.clipboard.writeText(roomShare.dataset.link || window.location.href); document.querySelector('#copy-link').textContent = 'Ссылка скопирована'; }); difficulty.addEventListener('change', newGame); createBoard(); updateTurn();
+if (new URLSearchParams(window.location.hash.slice(1)).has('room')) { document.querySelector('[data-mode="online"]').click(); roomCode.focus(); status.textContent = 'Введите код стола или нажмите «Присоединиться»'; }
